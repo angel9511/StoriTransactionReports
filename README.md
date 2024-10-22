@@ -9,7 +9,7 @@ This is a service for processing transaction files and sending out monthly summa
 To get the code, just clone the repo and cd into it:
 
 ```sh
-$ git clone 
+$ git clone https://github.com/angel9511/StoriTransactionReports.git
 $ cd StoriTransactionReports
 ```
 
