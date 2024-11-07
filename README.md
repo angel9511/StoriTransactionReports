@@ -10,7 +10,7 @@ To get the code, just clone the repo and cd into it:
 
 ```sh
 $ git clone https://github.com/angel9511/StoriTransactionReports.git
-$ cd StoriTransactionReports
+$ cd TransactionReports
 ```
 
 ## Database Setup

@@ -1,8 +1,6 @@
 package config
 
 import (
-	"database/sql"
-	"fmt"
 	_ "github.com/lib/pq"
 	"log"
 	"os"
@@ -22,16 +20,11 @@ var (
 	AWSRegion      string
 )
 
-var DB *sql.DB
-
 func Init() {
 	log.Println("Fetching environment variables...")
 	initMailingConfig()
 	initDbConfig()
 	initAWSConfig()
-
-	log.Println("Initializing database connection...")
-	initializeDatabaseConnection()
 
 	log.Println("Initialization complete")
 }
@@ -64,34 +57,5 @@ func initAWSConfig() {
 
 	if AWSRegion == "" {
 		panic("AWS Config is not properly set. Please check your environment variables.")
-	}
-}
-
-func initializeDatabaseConnection() {
-	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=require",
-		DbHost,
-		DbPort,
-		DbUser,
-		DbPassword,
-		DbName,
-	)
-
-	var err error
-	DB, err = sql.Open("postgres", connStr)
-	if err != nil {
-		log.Fatalf("Failed to connect to the database: %v", err)
-	}
-
-	if err := DB.Ping(); err != nil {
-		log.Fatalf("Failed to ping the database: %v", err)
-	}
-
-	fmt.Println("Database connection established successfully.")
-}
-
-func CloseDatabaseConnection() {
-	if DB != nil {
-		DB.Close()
-		fmt.Println("Database connection closed.")
 	}
 }

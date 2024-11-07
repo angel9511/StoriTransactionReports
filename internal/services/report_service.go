@@ -12,16 +12,18 @@ type ReportService interface {
 	ProcessReport(transactions []utils.Transaction, recipient string) error
 }
 
-type ReportServiceImpl struct{}
+type ReportServiceImpl struct {
+	db db.Database
+}
 
-func NewReportServiceImpl() *ReportServiceImpl {
-	return &ReportServiceImpl{}
+func NewReportServiceImpl(database db.Database) *ReportServiceImpl {
+	return &ReportServiceImpl{db: database}
 }
 
 func (s *ReportServiceImpl) ProcessReport(transactions []utils.Transaction, recipient string) error {
 	log.Printf("Starting to process transactions, transaction count: %d", len(transactions))
 
-	if err := db.BatchPersistTransactions(transactions); err != nil {
+	if err := s.db.BatchPersistTransactions(transactions); err != nil {
 		return fmt.Errorf("failed to persist transactions: %v", err)
 	}
 

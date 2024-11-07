@@ -3,14 +3,52 @@ package db
 import (
 	"StoriTransactionReports/internal/config"
 	"StoriTransactionReports/internal/utils"
+	"database/sql"
 	"fmt"
 	"log"
 	"strings"
 )
 
-func BatchPersistTransactions(transactions []utils.Transaction) error {
+type Database interface {
+	BatchPersistTransactions(transactions []utils.Transaction) error
+}
+
+type PostgresDatabase struct {
+	DB *sql.DB
+}
+
+func NewPostgresDatabase() (*PostgresDatabase, error) {
+	connStr := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=require",
+		config.DbHost,
+		config.DbPort,
+		config.DbUser,
+		config.DbPassword,
+		config.DbName,
+	)
+
+	db, err := sql.Open("postgres", connStr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to the database: %v", err)
+	}
+
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("failed to ping the database: %v", err)
+	}
+
+	fmt.Println("Database connection established successfully.")
+	return &PostgresDatabase{DB: db}, nil
+}
+
+func (p *PostgresDatabase) Close() {
+	if p.DB != nil {
+		p.DB.Close()
+		fmt.Println("Database connection closed.")
+	}
+}
+
+func (p *PostgresDatabase) BatchPersistTransactions(transactions []utils.Transaction) error {
 	log.Println("Starting batch persist transaction.")
-	tx, err := config.DB.Begin()
+	tx, err := p.DB.Begin()
 	if err != nil {
 		return fmt.Errorf("failed to begin transaction: %v", err)
 	}

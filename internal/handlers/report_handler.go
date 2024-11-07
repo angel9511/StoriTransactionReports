@@ -3,6 +3,7 @@ package handlers
 import (
 	"StoriTransactionReports/internal/services"
 	"StoriTransactionReports/internal/utils"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,31 +18,42 @@ func NewReportHandler(service services.ReportService) *ReportHandler {
 }
 
 func (h *ReportHandler) ProcessReportHandler(w http.ResponseWriter, r *http.Request) {
-
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		http.Error(w, "Failed to read request body", http.StatusBadRequest)
+		http.Error(w, "failed to read request body", http.StatusBadRequest)
 		return
 	}
 	defer r.Body.Close()
 
-	transactions, err := utils.ParseCSV(body)
+	var payload utils.SummaryRequestPayload
+	err = json.Unmarshal(body, &payload)
 	if err != nil {
-		http.Error(w, fmt.Sprintf("failed to read CSV: %v", err), http.StatusBadRequest)
+		http.Error(w, "failed to parse body", http.StatusBadRequest)
 		return
 	}
 
-	recipient := r.Header.Get("recipient")
-	if recipient == "" {
-		http.Error(w, fmt.Sprintf("request recipient header missing"), http.StatusBadRequest)
+	if payload.Recipient == "" {
+		http.Error(w, "request missing recipient", http.StatusBadRequest)
 		return
 	}
 
-	err = h.service.ProcessReport(transactions, recipient)
+	if payload.Transactions == "" {
+		http.Error(w, "request missing transactions", http.StatusBadRequest)
+		return
+	}
+
+	transactions, err := utils.ParseCSV([]byte(payload.Transactions))
+	if err != nil {
+		http.Error(w, fmt.Sprintf("failed to parse CSV: %v", err), http.StatusBadRequest)
+		return
+	}
+
+	err = h.service.ProcessReport(transactions, payload.Recipient)
 	if err != nil {
 		http.Error(w, fmt.Sprintf("failed to process report: %v", err), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("transactions processed successfully"))
 }
